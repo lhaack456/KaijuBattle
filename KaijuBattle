@@ -1,0 +1,109 @@
+class Kaiju:
+    def __init__(self, name, health=100):
+        self.name = name
+        self.health = health
+        self.attacks = self.set_attacks()
+
+    def set_attacks(self):
+        """ Assign specific attacks based on Kaiju name """
+        attack_options = {
+            "Godzilla": {"Atomic Breath": 25, "Tail Swipe": 15, "Claw Slash": 10, "Alligator Bite": 15},
+            "Mothra": {"Wing Gust": 15, "Silk Wrap": 10, "Blessed Wing": -20, "Holy Sting": 10},
+            "MechaGodzilla": {"Proton Beam": 25, "Missiles": 10, "Proton Punch": 20, "Tail Drill": 15},
+            "Kong": {"Axe Swing": 15, "Choke Handle": 15, "Jia's Sign": -10, "Ape Punch": 10},
+            "SpaceGodzilla": {"Crystal Spikes": 20, "Tail Swing": 15, "Flying Headbutt": 15, "Corona Beam": 25}
+        }
+        return attack_options.get(self.name, {"Basic Attack": 10})  # Default attack if Kaiju not in list
+
+    def is_alive(self):
+        return self.health > 0
+
+    def show_attacks(self):
+        """ Display available attacks """
+        print(f"\n{self.name}'s available attacks:")
+        for attack, dmg in self.attacks.items():
+            effect = "heals" if dmg < 0 else "deals"
+            print(f"- {attack} ({effect} {abs(dmg)})")
+
+    def take_damage(self, damage):
+        """ Reduce health when attacked """
+        self.health -= damage
+        if self.health < 0:
+            self.health = 0
+        print(f"{self.name} takes {damage} damage! Health left: {self.health}")
+
+    def heal(self, heal_amount):
+        """ Restore health if an attack has healing effects """
+        self.health += heal_amount
+        print(f"{self.name} heals for {heal_amount} HP! Current health: {self.health}")
+
+    def do_attack(self, attack_name, target):
+        """ Perform an attack on the opponent """
+        if attack_name not in self.attacks:
+            print(f"{self.name} tries to attack, but doesn't know '{attack_name}'!")
+            return
+
+        damage = self.attacks[attack_name]
+
+        if damage < 0:  # Healing move
+            print(f"{self.name} uses '{attack_name}' and heals!")
+            self.heal(-damage)
+        else:
+            print(f"{self.name} uses '{attack_name}' dealing {damage} damage!")
+            target.take_damage(damage)
+
+# Initialize Kaiju Roster
+kaiju_roster = {
+    "Godzilla": Kaiju("Godzilla", 100),
+    "Mothra": Kaiju("Mothra", 80),
+    "MechaGodzilla": Kaiju("MechaGodzilla", 100),
+    "Kong": Kaiju("Kong", 90),
+    "SpaceGodzilla": Kaiju("SpaceGodzilla", 100)
+}
+
+# Player Selection
+print("Choose your Kaiju!\n")
+for kaiju_name in kaiju_roster.keys():
+    print(f"- {kaiju_name}")
+
+player1_choice = input("Player 1: ").strip()
+while player1_choice not in kaiju_roster:
+    print("Invalid choice, please select a character.")
+    player1_choice = input("Player 1: ").strip()
+
+player2_choice = input("Player 2: ").strip()
+while player2_choice not in kaiju_roster:
+    print("Invalid choice, please select a character.")
+    player2_choice = input("Player 2: ").strip()
+
+player1_kaiju = kaiju_roster[player1_choice]
+player2_kaiju = kaiju_roster[player2_choice]
+
+print(f"\n{player1_kaiju.name} vs {player2_kaiju.name}")
+print("FIGHT!")
+
+# Battle Loop
+current_kaiju = player1_kaiju
+opponent_kaiju = player2_kaiju
+
+while player1_kaiju.is_alive() and player2_kaiju.is_alive():
+    print(f"\nIt's {current_kaiju.name}'s turn!")
+    current_kaiju.show_attacks()
+
+    chosen_attack = input("What will you do? ").strip()
+
+    while chosen_attack not in current_kaiju.attacks:
+        print("Invalid attack! Choose one from the list above!")
+        chosen_attack = input("What will you do? ").strip()
+
+    current_kaiju.do_attack(chosen_attack, opponent_kaiju)
+
+    if not opponent_kaiju.is_alive():
+        break  # Exit loop if opponent faints
+
+    # Swap turns
+    current_kaiju, opponent_kaiju = opponent_kaiju, current_kaiju
+
+# Announce Winner
+winner = player1_kaiju if player1_kaiju.is_alive() else player2_kaiju
+print(f"\n{winner.name} wins!")
