@@ -3,15 +3,19 @@ class Kaiju:
         self.name = name
         self.health = health
         self.attacks = self.set_attacks()
+        self.damage_multiplier = 1.0
+        self.buff_active = False
+        self.buff_turns_remaining = 0
 
     def set_attacks(self):
-        """ Assign specific attacks based on Kaiju name """
+        #Code Damage Buff for Alpha Call, and charge mechanic for Atomic Breath and Proton Beam
         attack_options = {
-            "Godzilla": {"Atomic Breath": 25, "Tail Swipe": 15, "Claw Slash": 10, "Alligator Bite": 15},
+            "Godzilla": {"Atomic Breath": 25, "Tail Swipe": 15, "Claw Slash": 15, "Alligator Bite": 15},
             "Mothra": {"Wing Gust": 15, "Silk Wrap": 10, "Blessed Wing": -20, "Holy Sting": 10},
-            "MechaGodzilla": {"Proton Beam": 25, "Missiles": 10, "Proton Punch": 20, "Tail Drill": 15},
-            "Kong": {"Axe Swing": 15, "Choke Handle": 15, "Jia's Sign": -10, "Ape Punch": 10},
-            "SpaceGodzilla": {"Crystal Spikes": 20, "Tail Swing": 15, "Flying Headbutt": 15, "Corona Beam": 25}
+            "MechaGodzilla": {"Proton Beam": 30, "Missiles": 10, "Proton Punch": 15, "Tail Drill": 15},
+            "Kong": {"Axe Swing": 15, "Choke Handle": 15, "Jia's Sign": "Damage Buff", "Ape Punch": 10},
+            "SpaceGodzilla": {"Crystal Spikes": 20, "Tail Swing": 15, "Flying Headbutt": 15, "Corona Beam": 25},
+            "King Ghidorah": {"Gravity Beam": 20, "Triangle Bite": 15, "Alpha Call": "Damage Buff", "Spiked Tails": 15}
         }
         return attack_options.get(self.name, {"Basic Attack": 10})  # Default attack if Kaiju not in list
 
@@ -21,9 +25,13 @@ class Kaiju:
     def show_attacks(self):
         """ Display available attacks """
         print(f"\n{self.name}'s available attacks:")
+        buff_attacks = ["Jia's Sign", "Alpha Call"]
         for attack, dmg in self.attacks.items():
-            effect = "heals" if dmg < 0 else "deals"
-            print(f"- {attack} ({effect} {abs(dmg)})")
+            if attack in buff_attacks:
+                effect = "Damage Buff"
+            else:
+                effect = f"{'heals' if dmg < 0 else 'deals'} {abs(dmg)}"
+            print(f"- {attack} ({effect})")
 
     def take_damage(self, damage):
         """ Reduce health when attacked """
@@ -43,14 +51,36 @@ class Kaiju:
             print(f"{self.name} tries to attack, but doesn't know '{attack_name}'!")
             return
 
-        damage = self.attacks[attack_name]
+        # Retrieve the attack damage
+        base_damage = self.attacks[attack_name]
+        
+        if attack_name in ["Jia's Sign", "Alpha Call"]:
+            print(f"{self.name} used '{attack_name}'. Their attack increased!")
+            self.damage_multiplier = 1.5  # Increase damage output
+            self.buff_turns_remaining = 3  # Buff lasts for 3 turns
+            return
+
+
+        # Ensure we only multiply numerical values
+        if isinstance(base_damage, (int, float)):  
+            damage = base_damage * self.damage_multiplier
+        else:
+            print(f"{self.name}'s attack increased!")
+            return
+
+        print(f"{self.name} uses '{attack_name}', dealing {int(damage)} damage!")
+        target.take_damage(int(damage))
+        if self.buff_turns_remaining > 0:
+            self.buff_turns_remaining -= 1
+            if self.buff_turns_remaining == 0:
+                self.damage_multiplier = 1.0
+                print(f"{self.name}'s damage buff has worn off.")
+
 
         if damage < 0:  # Healing move
             print(f"{self.name} uses '{attack_name}' and heals!")
             self.heal(-damage)
-        else:
-            print(f"{self.name} uses '{attack_name}' dealing {damage} damage!")
-            target.take_damage(damage)
+
 
 # Initialize Kaiju Roster
 kaiju_roster = {
@@ -58,7 +88,8 @@ kaiju_roster = {
     "Mothra": Kaiju("Mothra", 80),
     "MechaGodzilla": Kaiju("MechaGodzilla", 100),
     "Kong": Kaiju("Kong", 90),
-    "SpaceGodzilla": Kaiju("SpaceGodzilla", 100)
+    "SpaceGodzilla": Kaiju("SpaceGodzilla", 100),
+    "King Ghidorah": Kaiju("King Ghidorah", 100)
 }
 
 # Player Selection
@@ -91,19 +122,20 @@ while player1_kaiju.is_alive() and player2_kaiju.is_alive():
     current_kaiju.show_attacks()
 
     chosen_attack = input("What will you do? ").strip()
-
     while chosen_attack not in current_kaiju.attacks:
         print("Invalid attack! Choose one from the list above!")
         chosen_attack = input("What will you do? ").strip()
 
+    # Perform attack ONLY ONCE
     current_kaiju.do_attack(chosen_attack, opponent_kaiju)
 
+
+    # Check if opponent fainted before swapping turns
     if not opponent_kaiju.is_alive():
-        break  # Exit loop if opponent faints
+        break  # Stop battle if one faints
 
     # Swap turns
     current_kaiju, opponent_kaiju = opponent_kaiju, current_kaiju
-
 # Announce Winner
 winner = player1_kaiju if player1_kaiju.is_alive() else player2_kaiju
 print(f"\n{winner.name} wins!")
