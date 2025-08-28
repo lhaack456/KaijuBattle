@@ -1,6 +1,4 @@
 ## [Version 0.0.1.6] - 2025-08-028
-### Upgrade Steps
-- None required
 ### New Features
 - Added Rodan to the roster! 
 ### Bug Fixes
