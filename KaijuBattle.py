@@ -1,7 +1,8 @@
 class Kaiju:
-    def __init__(self, name, health=100):
+    def __init__(self, name, max_health):
         self.name = name
-        self.health = health
+        self.health = max_health
+        self.max_health = max_health
         self.attacks = self.set_attacks()
         self.damage_multiplier = 1.0
         self.buff_active = False
@@ -15,7 +16,8 @@ class Kaiju:
             "MechaGodzilla": {"Proton Beam": 30, "Missiles": 10, "Proton Punch": 15, "Tail Drill": 15},
             "Kong": {"Axe Swing": 15, "Choke Handle": 15, "Jia's Sign": "Damage Buff", "Ape Punch": 10},
             "SpaceGodzilla": {"Crystal Spikes": 20, "Tail Swing": 15, "Flying Headbutt": 15, "Corona Beam": 25},
-            "King Ghidorah": {"Gravity Beam": 20, "Triangle Bite": 15, "Alpha Call": "Damage Buff", "Spiked Tails": 15}
+            "King Ghidorah": {"Gravity Beam": 20, "Triangle Bite": 15, "Alpha Call": "Damage Buff", "Spiked Tails": 15},
+            "Rodan": {"Air Slam": 15, "Sonic Boom": 15, "Uranium Heat Beam": 20, "Flame On!": "Damage Buff"}
         }
         return attack_options.get(self.name, {"Basic Attack": 10})  # Default attack if Kaiju not in list
 
@@ -25,7 +27,7 @@ class Kaiju:
     def show_attacks(self):
         """ Display available attacks """
         print(f"\n{self.name}'s available attacks:")
-        buff_attacks = ["Jia's Sign", "Alpha Call"]
+        buff_attacks = ["Jia's Sign", "Alpha Call", "Flame On!"]
         for attack, dmg in self.attacks.items():
             if attack in buff_attacks:
                 effect = "Damage Buff"
@@ -43,6 +45,8 @@ class Kaiju:
     def heal(self, heal_amount):
         """ Restore health if an attack has healing effects """
         self.health += heal_amount
+        if self.health > self.max_health:
+            self.health = self.max_health
         print(f"{self.name} heals for {heal_amount} HP! Current health: {self.health}")
 
     def do_attack(self, attack_name, target):
@@ -54,7 +58,7 @@ class Kaiju:
         # Retrieve the attack damage
         base_damage = self.attacks[attack_name]
         
-        if attack_name in ["Jia's Sign", "Alpha Call"]:
+        if attack_name in ["Jia's Sign", "Alpha Call", "Flame On!"]:
             print(f"{self.name} used '{attack_name}'. Their attack increased!")
             self.damage_multiplier = 1.5  # Increase damage output
             self.buff_turns_remaining = 3  # Buff lasts for 3 turns
@@ -67,9 +71,13 @@ class Kaiju:
         else:
             print(f"{self.name}'s attack increased!")
             return
+        if damage > 0:
+            print(f"{self.name} uses '{attack_name}', dealing {int(damage)} damage!")
+            target.take_damage(int(damage))
+        elif damage < 0:
+            print(f"{self.name} uses '{attack_name}', and heals {int(-damage)} health! Health Left: {self.health}")
+            self.heal(-damage)
 
-        print(f"{self.name} uses '{attack_name}', dealing {int(damage)} damage!")
-        target.take_damage(int(damage))
         if self.buff_turns_remaining > 0:
             self.buff_turns_remaining -= 1
             if self.buff_turns_remaining == 0:
@@ -77,9 +85,9 @@ class Kaiju:
                 print(f"{self.name}'s damage buff has worn off.")
 
 
-        if damage < 0:  # Healing move
-            print(f"{self.name} uses '{attack_name}' and heals!")
-            self.heal(-damage)
+
+
+
 
 
 # Initialize Kaiju Roster
@@ -89,7 +97,8 @@ kaiju_roster = {
     "MechaGodzilla": Kaiju("MechaGodzilla", 100),
     "Kong": Kaiju("Kong", 90),
     "SpaceGodzilla": Kaiju("SpaceGodzilla", 100),
-    "King Ghidorah": Kaiju("King Ghidorah", 100)
+    "King Ghidorah": Kaiju("King Ghidorah", 100),
+    "Rodan": Kaiju("Rodan", 90)
 }
 
 # Player Selection
@@ -107,8 +116,8 @@ while player2_choice not in kaiju_roster:
     print("Invalid choice, please select a character.")
     player2_choice = input("Player 2: ").strip()
 
-player1_kaiju = kaiju_roster[player1_choice]
-player2_kaiju = kaiju_roster[player2_choice]
+player1_kaiju = Kaiju(player1_choice, kaiju_roster[player1_choice].max_health)
+player2_kaiju = Kaiju(player2_choice, kaiju_roster[player2_choice].max_health)
 
 print(f"\n{player1_kaiju.name} vs {player2_kaiju.name}")
 print("FIGHT!")
